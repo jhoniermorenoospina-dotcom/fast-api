@@ -43,11 +43,16 @@ def root():
 def health():
     return {"status": "alive"}
 
+from fastapi import Request
+
 @app.post("/trade")
 def ingest_trade(
     trade: TradeSchema,
-    authorization: str | None = Header(None),
+    request: Request,
     db: Session = Depends(get_db)
+):
+    auth(request)
+    
 ):
     auth(authorization)
 
@@ -71,6 +76,7 @@ def ingest_trade(
         "status": "saved",
         "trade_id": db_trade.id
     }
+
 
 
 
