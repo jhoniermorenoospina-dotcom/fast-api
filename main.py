@@ -7,7 +7,7 @@ from models import Base, Trade as TradeModel
 from schemas import TradeSchema
 
 # ---------- INIT DB ----------
-Base.metadata.create_all(bind=engine)
+#Base.metadata.create_all(bind=engine)
 
 API_KEY = os.getenv("API_KEY")
 
@@ -67,3 +67,4 @@ def ingest_trade(
         "status": "saved",
         "trade_id": db_trade.id
     }
+
