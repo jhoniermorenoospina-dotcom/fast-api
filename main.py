@@ -1,5 +1,5 @@
 import os
-from fastapi import FastAPI, HTTPException, Depends, Header
+from fastapi import FastAPI, HTTPException, Depends, Request
 from sqlalchemy.orm import Session
 
 from db import SessionLocal
@@ -10,7 +10,7 @@ API_KEY = os.getenv("API_KEY")
 
 app = FastAPI(title="Trading Metrics API")
 
-# ---------- DB DEP ----------
+# ---------- DB ----------
 def get_db():
     db = SessionLocal()
     try:
@@ -19,8 +19,13 @@ def get_db():
         db.close()
 
 # ---------- AUTH ----------
-def auth(authorization: str = Header(...)):
-    if authorization != f"Bearer {API_KEY}":
+def auth(request: Request):
+    auth_header = request.headers.get("authorization")
+
+    if not auth_header:
+        raise HTTPException(status_code=401, detail="Missing Authorization header")
+
+    if auth_header != f"Bearer {API_KEY}":
         raise HTTPException(status_code=401, detail="Unauthorized")
 
 # ---------- ENDPOINTS ----------
@@ -36,10 +41,10 @@ def health():
 @app.post("/trade")
 def ingest_trade(
     trade: TradeSchema,
-    authorization: str = Header(...),
+    request: Request,
     db: Session = Depends(get_db)
 ):
-    auth(authorization)
+    auth(request)
 
     db_trade = TradeModel(
         run_id=trade.run_id,
