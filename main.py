@@ -14,7 +14,7 @@ API_KEY = os.getenv("API_KEY")
 app = FastAPI(title="Trading Metrics API")
 
 # ---------- AUTH ----------
-def auth(authorization: str | None = Header(None)):
+def auth(authorization: str | None = Header(None, alias="Authorization")):
     if authorization is None:
         raise HTTPException(status_code=401, detail="Missing Authorization header")
 
@@ -67,4 +67,5 @@ def ingest_trade(
         "status": "saved",
         "trade_id": db_trade.id
     }
+
 
