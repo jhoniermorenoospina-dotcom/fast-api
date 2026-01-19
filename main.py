@@ -10,11 +10,6 @@ API_KEY = os.getenv("API_KEY")
 
 app = FastAPI(title="Trading Metrics API")
 
-# ---------- AUTH ----------
-def auth(authorization: str = Header(...)):
-    if authorization != f"Bearer {API_KEY}":
-        raise HTTPException(status_code=401, detail="Unauthorized")
-
 # ---------- DB DEP ----------
 def get_db():
     db = SessionLocal()
@@ -22,6 +17,11 @@ def get_db():
         yield db
     finally:
         db.close()
+
+# ---------- AUTH ----------
+def auth(authorization: str = Header(...)):
+    if authorization != f"Bearer {API_KEY}":
+        raise HTTPException(status_code=401, detail="Unauthorized")
 
 # ---------- ENDPOINTS ----------
 
