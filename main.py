@@ -11,8 +11,6 @@ API_KEY = os.getenv("API_KEY")
 app = FastAPI(title="Trading Metrics API")
 
 # ---------- AUTH ----------
-from fastapi import Header, HTTPException
-
 def auth(authorization: str = Header(...)):
     if authorization != f"Bearer {API_KEY}":
         raise HTTPException(status_code=401, detail="Unauthorized")
@@ -26,6 +24,15 @@ def get_db():
         db.close()
 
 # ---------- ENDPOINTS ----------
+
+@app.get("/")
+def root():
+    return {"status": "trading-api running"}
+
+@app.get("/health")
+def health():
+    return {"status": "alive"}
+
 @app.post("/trade")
 def ingest_trade(
     trade: TradeSchema,
@@ -54,7 +61,3 @@ def ingest_trade(
         "status": "saved",
         "trade_id": db_trade.id
     }
-
-
-
-
