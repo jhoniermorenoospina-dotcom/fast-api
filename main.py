@@ -1,21 +1,16 @@
 import os
-from fastapi import FastAPI, Header, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, Request
 from sqlalchemy.orm import Session
 
-from db import engine, SessionLocal
-from models import Base, Trade as TradeModel
+from db import SessionLocal
+from models import Trade as TradeModel
 from schemas import TradeSchema
-
-# ---------- INIT DB ----------
-#Base.metadata.create_all(bind=engine)
 
 API_KEY = os.getenv("API_KEY")
 
 app = FastAPI(title="Trading Metrics API")
 
 # ---------- AUTH ----------
-from fastapi import Request
-
 def auth(request: Request):
     auth_header = request.headers.get("Authorization")
 
@@ -43,8 +38,6 @@ def root():
 def health():
     return {"status": "alive"}
 
-from fastapi import Request
-
 @app.post("/trade")
 def ingest_trade(
     trade: TradeSchema,
@@ -52,9 +45,6 @@ def ingest_trade(
     db: Session = Depends(get_db)
 ):
     auth(request)
-    
-):
-    auth(authorization)
 
     db_trade = TradeModel(
         run_id=trade.run_id,
@@ -76,7 +66,3 @@ def ingest_trade(
         "status": "saved",
         "trade_id": db_trade.id
     }
-
-
-
-
