@@ -1,31 +1,33 @@
 import os
-from fastapi import FastAPI, Header, HTTPException
-from pydantic import BaseModel
+from fastapi import FastAPI, Header, HTTPException, Depends
+from sqlalchemy.orm import Session
+
+from db import engine, SessionLocal
+from models import Base, Trade as TradeModel
+from schemas import TradeSchema
+
+# ---------- INIT DB ----------
+Base.metadata.create_all(bind=engine)
 
 API_KEY = os.getenv("API_KEY")
 
 app = FastAPI(title="Trading Metrics API")
 
-# ---------- MODELOS ----------
-
-class Trade(BaseModel):
-    run_id: str
-    instrument: str
-    pnl: float
-    r: float
-    mfe: float
-    mae: float
-    entry_time: str
-    exit_time: str
-
 # ---------- AUTH ----------
-
 def auth(authorization: str | None = Header(None)):
     if authorization is None:
         raise HTTPException(status_code=401, detail="Missing Authorization header")
 
     if authorization != f"Bearer {API_KEY}":
         raise HTTPException(status_code=401, detail="Unauthorized")
+
+# ---------- DB DEP ----------
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 # ---------- ENDPOINTS ----------
 
@@ -38,12 +40,13 @@ def health():
     return {"status": "alive"}
 
 @app.post("/trade")
-def ingest_trade(trade: Trade, authorization: str | None = Header(None)):
+def ingest_trade(
+    trade: TradeSchema,
+    authorization: str | None = Header(None),
+    db: Session = Depends(get_db)
+):
     auth(authorization)
 
-    # aquí luego va DB insert
-    return {
-        "status": "ok",
-        "instrument": trade.instrument,
-        "pnl": trade.pnl
-    }
+    db_trade = TradeModel(
+        run_id=trade.run_id,
+        i
