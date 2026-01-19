@@ -4,6 +4,7 @@ from datetime import datetime
 
 from fastapi import FastAPI, HTTPException, Depends, Request
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 
 from db import SessionLocal
 from models import Trade as TradeModel
@@ -101,3 +102,40 @@ def ingest_trade(
         "status": "saved",
         "trade_id": db_trade.id
     }
+
+# ---------- DASHBOARD RANKING ----------
+@app.get("/dashboard/ranking")
+def dashboard_ranking(
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    auth(request)
+
+    results = (
+        db.query(
+            StrategyRunModel.id.label("run_id"),
+            StrategyRunModel.instrument.label("instrument"),
+            func.count(TradeModel.id).label("total_trades"),
+            func.coalesce(func.sum(TradeModel.pnl), 0).label("net_profit"),
+            func.coalesce(func.avg(TradeModel.r), 0).label("expectancy"),
+            func.coalesce(func.min(TradeModel.pnl), 0).label("max_drawdown"),
+        )
+        .join(TradeModel, TradeModel.run_id == StrategyRunModel.id)
+        .group_by(StrategyRunModel.id)
+        .order_by(func.sum(TradeModel.pnl).desc())
+        .all()
+    )
+
+    ranking = [
+        {
+            "run_id": str(row.run_id),
+            "instrument": row.instrument,
+            "total_trades": int(row.total_trades),
+            "net_profit": float(row.net_profit),
+            "expectancy": float(row.expectancy),
+            "max_drawdown": float(row.max_drawdown),
+        }
+        for row in results
+    ]
+
+    return ranking
