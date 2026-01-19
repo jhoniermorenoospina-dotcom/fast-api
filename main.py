@@ -3,6 +3,7 @@ import uuid
 from datetime import datetime
 
 from fastapi import FastAPI, HTTPException, Depends, Request
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
@@ -14,6 +15,20 @@ from schemas import TradeSchema, StrategyRunCreate
 API_KEY = os.getenv("API_KEY")
 
 app = FastAPI(title="Trading Metrics API")
+
+# ---------- CORS ----------
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "https://trade-parser--shoniermoreno.replit.app",
+        "https://*.replit.app",
+        "http://localhost:5173",
+        "http://localhost:3000",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # ---------- DB ----------
 def get_db():
