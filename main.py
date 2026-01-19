@@ -49,4 +49,21 @@ def ingest_trade(
 
     db_trade = TradeModel(
         run_id=trade.run_id,
-        i
+        instrument=trade.instrument,
+        entry_time=trade.entry_time,
+        exit_time=trade.exit_time,
+        pnl=trade.pnl,
+        r=trade.r,
+        mfe=trade.mfe,
+        mae=trade.mae,
+        direction=trade.direction
+    )
+
+    db.add(db_trade)
+    db.commit()
+    db.refresh(db_trade)
+
+    return {
+        "status": "saved",
+        "trade_id": db_trade.id
+    }
