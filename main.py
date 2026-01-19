@@ -1,10 +1,14 @@
 import os
+import uuid
+from datetime import datetime
+
 from fastapi import FastAPI, HTTPException, Depends, Request
 from sqlalchemy.orm import Session
 
 from db import SessionLocal
 from models import Trade as TradeModel
-from schemas import TradeSchema
+from models import StrategyRun as StrategyRunModel
+from schemas import TradeSchema, StrategyRunCreate
 
 API_KEY = os.getenv("API_KEY")
 
@@ -38,6 +42,37 @@ def root():
 def health():
     return {"status": "alive"}
 
+# ---------- CREATE STRATEGY RUN ----------
+@app.post("/strategy-run")
+def create_strategy_run(
+    payload: StrategyRunCreate,
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    auth(request)
+
+    run_id = uuid.uuid4()
+
+    db_run = StrategyRunModel(
+        id=run_id,
+        instrument=payload.instrument,
+        start_time=payload.start_time or datetime.utcnow(),
+        rr=payload.rr,
+        be_rr=payload.be_rr,
+        trailing_rr=payload.trailing_rr,
+        stop_type=payload.stop_type
+    )
+
+    db.add(db_run)
+    db.commit()
+    db.refresh(db_run)
+
+    return {
+        "status": "created",
+        "run_id": str(run_id)
+    }
+
+# ---------- INGEST TRADE ----------
 @app.post("/trade")
 def ingest_trade(
     trade: TradeSchema,
